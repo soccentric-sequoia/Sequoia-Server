@@ -1,0 +1,2 @@
+#pragma once
+#define SEQUOIA_SERVER_VERSION "@PROJECT_VERSION@"
