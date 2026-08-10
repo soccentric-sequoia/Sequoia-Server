@@ -1,5 +1,5 @@
 #pragma once
-// grpc_server/ClientServiceImpl.h — implements the sequoia::stream::ClientService bidi stream.
+// grpc_server/ClientServiceImpl.h — implements the acadia::stream::ClientService bidi stream.
 //
 // The Client (on-target device) sends ClientMessage frames over a single persistent stream.
 // This implementation:
@@ -29,14 +29,14 @@
 namespace sequoia::grpc {
 
 class ClientServiceImpl final
-    : public sequoia::stream::ClientService::Service {
+    : public acadia::stream::ClientService::Service {
 public:
     ClientServiceImpl(RunService& run_svc, LogService& log_svc);
 
     ::grpc::Status Connect(
         ::grpc::ServerContext*                                                    ctx,
-        ::grpc::ServerReaderWriter<sequoia::stream::ServerMessage,
-                                   sequoia::stream::ClientMessage>* stream) override;
+        ::grpc::ServerReaderWriter<acadia::stream::ServerMessage,
+                                   acadia::stream::ClientMessage>* stream) override;
 
 private:
     struct IngestWork {
@@ -52,11 +52,11 @@ private:
 
     // Process a single TestResultBatch, enqueue each sample for DB write.
     void handle_result_batch(
-        const sequoia::stream::TestResultBatch& batch,
+        const acadia::stream::TestResultBatch& batch,
         BoundedQueue<IngestWork>&              queue);
 
     // Process a single LogBatch.
-    void handle_log_batch(const sequoia::stream::LogBatch& batch);
+    void handle_log_batch(const acadia::stream::LogBatch& batch);
 };
 
 }  // namespace sequoia::grpc
