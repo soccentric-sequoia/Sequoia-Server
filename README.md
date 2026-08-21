@@ -1,4 +1,65 @@
-# Sequoia Server The **Sequoia Server** is the central orchestration and data-collection backend for the Sequoia IV&V (Independent Validation & Verification) tool suite. It exposes: - A **gRPC service** (`HalService`) for the embedded HAL Client App to submit test results and receive streaming commands.
+# Sequoia-Server
+
+## Project Summary
+
+Sequoia-Server is the central orchestration and data-collection backend for the
+Sequoia IV&V tool suite. The C++ service build is configured with CMake presets,
+Docker development assets, Doxygen, and a vcpkg dependency manifest. The
+documented architecture exposes a gRPC HalService for embedded clients and a
+Drogon REST API for web and external tooling. Service-layer responsibilities
+include runs, logs, authentication, OTA orchestration, health, modules, target
+heartbeats, and live log streaming. PostgreSQL persistence is represented by
+repositories and versioned SQL migrations; configuration is read from
+environment variables and an optional TOML file, with CLI log-level/config
+overrides. Optional Prometheus metrics and Docker Compose support are also
+documented.
+
+The repository contains unit tests for registry, gRPC backpressure, services,
+time/UUID/hash/result conversion, plus a migration integration test and a
+configuration test. These are useful contract evidence, but passing tests do
+not prove a deployed PostgreSQL instance, authenticated web client, embedded
+HAL client, OTA artifact store, or production TLS/network configuration. The
+README therefore keeps the useful quick-start/build/API material while
+marking environment-dependent features as partial or unknown. Use the checked-
+in CMake presets and Docker setup for reproducible local validation, and treat
+the `.env.example` secret fields as required deployment inputs.
+
+The API and migration inventories are intentionally concise: route presence
+does not establish authorization correctness, durable persistence, or a
+successful client handshake. Docker setup can provide local dependencies, but
+it does not substitute for production secrets, backups, observability, or
+failure-recovery exercises. Keep endpoint behavior aligned with the Dashboard,
+Client, and PySDK contracts when changing this service.
+
+## Feature Inventory
+
+| # | Name / Description | Implemented? | Test Coverage? | Manual Test |
+|---:|---|---|---|---|
+| 1 | CMake service build and debug/release/test presets | Implemented | Build/test commands present | [ ] Manual verification required |
+| 2 | gRPC HalService client ingestion and command stream | Implemented | Backpressure test present | [ ] Manual verification required |
+| 3 | REST `/api/v1` service surface | Implemented | Service tests present | [ ] Manual verification required |
+| 4 | Authentication, sessions, and API tokens | Partial | Auth-related service tests present | [ ] Manual verification required |
+| 5 | Module registry and module listing | Implemented | `tests/unit/registry/ModuleRegistryTest.cc` | [ ] Manual verification required |
+| 6 | Run orchestration and result conversion | Implemented | Run/result unit tests present | [ ] Manual verification required |
+| 7 | Log storage, listing, and SSE tail | Partial | Focused coverage not complete | [ ] Manual verification required |
+| 8 | PostgreSQL repositories and startup migrations | Partial | Migration integration/config tests present | [ ] Manual verification required |
+| 9 | Target heartbeat and board information | Implemented | Service coverage partial | [ ] Manual verification required |
+| 10 | OTA upload and trigger orchestration | Partial | No complete device rollout test found | [ ] Manual verification required |
+| 11 | Prometheus metrics | Partial | No focused metrics test found | [ ] Manual verification required |
+| 12 | Docker Compose development environment | Implemented | Environment build only | [ ] Manual verification required |
+| 13 | Production deployment, secrets, and TLS | Unknown | No deployment verification found | [ ] Manual verification required |
+
+## Build and Test
+
+```bash
+cmake --preset debug && cmake --build build/debug
+cmake --preset test && cmake --build build/test
+ctest --test-dir build/test --output-on-failure
+```
+
+See [LOCAL_SETUP.md](LOCAL_SETUP.md), [docker/README.md](docker/README.md),
+and `.env.example` for environment setup. Test sources are under `tests/` and
+`test/`.
 - A **REST/HTTP API** (`/api/v1`) for the Web UI and external tooling.
 - A **PostgreSQL** backend with versioned migrations.
 - **OTA firmware upgrade** orchestration.
