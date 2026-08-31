@@ -47,12 +47,12 @@ Client, and PySDK contracts when changing this service.
 ## Build and Test
 
 ```bash
-cmake --preset debug && cmake --build build/debug
-cmake --preset test && cmake --build build/test
-ctest --test-dir build/test --output-on-failure
+# The build is Docker-based — the default and only build path:
+make build          # docker-build-server (x86 production)
+make test           # ctest (unit label) inside the Docker build container
 ```
 
-See [LOCAL_SETUP.md](LOCAL_SETUP.md), [docker/README.md](docker/README.md), and `.env.example` for
+See [docker/README.md](docker/README.md) and `.env.example` for
 environment setup. Test sources are under `tests/` and `test/`.
 
 - A **REST/HTTP API** (`/api/v1`) for the Web UI and external tooling.
@@ -72,7 +72,7 @@ most reliable way\*\* to get started on any machine: ```bash cd docker ./setup.s
 5. You're ready to build! Then enter the container and build:
 ```bash
 docker exec -it sequoia-dev bash
-cmake --preset debug && cmake --build build/debug
+make build          # Docker x86 build
 ``` ### Alternative: VS Code Dev Container Open this project in VS Code and:
 1. Install the "Dev Containers" extension
 2. Press `F1` → "Dev Containers: Reopen in Container"
@@ -102,14 +102,13 @@ docker compose -f docker/docker-compose.yml up --build
 
 ## Building ```bash
 # Debug (default dev preset)
-cmake --preset debug
 cmake --build build/debug # Release
-cmake --preset release
+make docker-build-server   # Docker (production profile)
 cmake --build build/release # Run tests
-cmake --preset test
+make test           # Docker ctest
 cmake --build build/test
 ctest --test-dir build/test --output-on-failure # ASan
-cmake --preset asan
+# asan preset runs inside the Docker build container
 cmake --build build/asan
 ```
 

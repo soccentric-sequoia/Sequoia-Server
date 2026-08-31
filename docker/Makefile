@@ -1,8 +1,68 @@
-IMAGE_NAME ?= sequoia .PHONY: help check build build-unified build-server run clean delete-images up down logs shell # Default target
-help: @echo "Sequoia Docker Makefile" @echo "" @echo "Recommended commands:" @echo " make setup - One-command setup (runs setup.sh)" @echo " make check - Check Docker prerequisites" @echo " make up - Start dev environment (docker-compose)" @echo " make shell - Enter dev container" @echo " make logs - View container logs" @echo " make down - Stop all containers" @echo "" @echo "Build commands:" @echo " make build - Auto-detect platform and build (uses build.sh)" @echo " make build-arm64 - Build for ARM64 (Intel x86 RT 5)" @echo " make build-amd64 - Build for x86_64" @echo "" @echo "Legacy commands (use unified instead):" @echo " make build-server - Build x86_64 (old Dockerfile.server)" @echo " make build-pi - Build ARM64 (old Dockerfile)" # Recommended: One-command setup
-setup: @./setup.sh # Check prerequisites
-check: @./check-prereqs.sh # Unified build (auto-detects platform)
-build: @./build.sh # Platform-specific builds (unified Dockerfile)
-build-amd64: @docker buildx build --platform linux/amd64 --load \ --build-arg UID=$$(id -u) --build-arg GID=$$(id -g) \ -f Dockerfile.unified -t $(IMAGE_NAME):amd64 .. build-arm64: @docker buildx build --platform linux/arm64 --load \ --build-arg UID=$$(id -u) --build-arg GID=$$(id -g) \ -f Dockerfile.unified -t $(IMAGE_NAME):arm64 .. # Docker Compose commands
-up: @docker compose -f docker-compose.dev.yml up -d @echo "Services started. Enter container with: make shell" down: @docker compose -f docker-compose.dev.yml down logs: @docker compose -f docker-compose.dev.yml logs -f shell: @docker exec -it sequoia-dev bash || echo "Container not running. Start with: make up" # Legacy builds (kept for backwards compatibility)
-build-pi: @echo "Building Docker image $(IMAGE_NAME) for Intel x86 RT 5 (ARM64)..." docker buildx build --platform linux/arm64 --load --build-arg UID=$$(id -u) --build-arg GID=$$(id -g) -t $(IMAGE_NAME) -f Dockerfile .. build-server: @echo "Building Docker image $(IMAGE_NAME)-server for x86 Ubuntu 22.04..." docker buildx build --platform linux/amd64 --load \ --build-arg UID=$$(id -u) --build-arg GID=$$(id -g) \ -f Dockerfile.server -t $(IMAGE_NAME)-server .. run: # No --gpus flag: Intel x86 RT 5 has Intel x86 RT 5 (not CUDA) docker run -it --rm --hostname Intel x86 RT 5 $(IMAGE_NAME) clean: docker rmi $(IMAGE_NAME) || true delete-images: @echo "Warning: This will delete ALL Docker images!" @read -p "Are you sure? (y/N) " -n 1 -r; \ echo; \ if [[ $$REPLY =~ ^[Yy]$$ ]]; then \ docker rmi $$(docker images -q) || true; \ fi
+# Sequoia-Server — Docker image build/run helpers.
+# The top-level Makefile passes IMAGE_NAME=$(DOCKER_SERVER_IMAGE) so the image
+# Docker then runs matches the tag produced by build-server.
+IMAGE_NAME ?= sequoia
+
+.PHONY: help check setup build build-amd64 build-arm64 build-server up down logs shell clean run delete-images
+
+help:
+	@echo "Sequoia Docker Makefile"
+	@echo ""
+	@echo "Recommended commands:"
+	@echo " make build-server - Build the x86_64 server image (production)"
+	@echo " make build-arm64  - Build for ARM64 target (Intel x86 RT 5)"
+	@echo " make up / down / shell / logs  - dev environment (docker-compose)"
+
+setup:
+	@./setup.sh
+
+check:
+	@./check-prereqs.sh
+
+build:
+	@./build.sh
+
+build-amd64:
+	@docker buildx build --platform linux/amd64 --load \
+		--build-arg UID=$$(id -u) --build-arg GID=$$(id -g) \
+		-f Dockerfile.unified -t $(IMAGE_NAME):amd64 ..
+
+build-arm64:
+	@docker buildx build --platform linux/arm64 --load \
+		--build-arg UID=$$(id -u) --build-arg GID=$$(id -g) \
+		-f Dockerfile.unified -t $(IMAGE_NAME):arm64 ..
+
+# The top-level Makefile passes IMAGE_NAME=$(DOCKER_SERVER_IMAGE) so the image
+# Docker then runs matches the tag produced here.
+build-server:
+	@echo "Building Docker image $(IMAGE_NAME) for x86 Ubuntu 22.04..."
+	docker buildx build --platform linux/amd64 --load \
+		--build-arg UID=$$(id -u) --build-arg GID=$$(id -g) \
+		-f Dockerfile.server -t $(IMAGE_NAME) ..
+
+up:
+	@docker compose -f docker-compose.dev.yml up -d
+	@echo "Services started. Enter container with: make shell"
+
+down:
+	@docker compose -f docker-compose.dev.yml down
+
+logs:
+	@docker compose -f docker-compose.dev.yml logs -f
+
+shell:
+	@docker exec -it sequoia-dev bash || echo "Container not running. Start with: make up"
+
+run:
+	docker run -it --rm --hostname "Intel x86 RT 5" $(IMAGE_NAME)
+
+clean:
+	docker rmi $(IMAGE_NAME) || true
+
+delete-images:
+	@echo "Warning: This will delete ALL Docker images!"
+	@read -p "Are you sure? (y/N) " -n 1 -r; \
+	echo; \
+	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
+		docker rmi $$(docker images -q) || true; \
+	fi

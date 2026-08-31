@@ -11,10 +11,10 @@ compose and helper scripts provide local database and development setup.
 ## 1. Prerequisites
 
 - Native: CMake, Ninja, compiler, Protobuf/gRPC tooling, PostgreSQL client
-  libraries, OpenSSL, and the dependencies described by `local_install.sh`.
+  libraries, OpenSSL, and the dependencies baked into the Docker build image.
 - Docker path: Docker/buildx and permission to run containers. `docker/build.sh`
   and `docker/check-prereqs.sh` support the image workflow.
-- Optional full Ubuntu setup: `./local_install.sh --skip-apt`, or run it without
+- All toolchain dependencies come from the Docker image (`docker/Makefile build-server`); no host setup script is needed.
   that option when sudo/apt and network access are available. It can build
   yaml-cpp, Drogon, and `grpc_cpp_plugin` from source.
 - Remote deployment: `sshpass`, reachable targets, and credentials. **Credential
@@ -69,7 +69,7 @@ make list
 
 Deployment copies the cross-built `lib/` and `bin/` trees into `/tmp/acu-test`
 on the target. For the standalone server development environment, see
-`docker/docker-compose.dev.yml`, `docker/build.sh`, and `local_install.sh`; the
+`docker/docker-compose.dev.yml` and `docker/build.sh`; the
 compose stack is local infrastructure, not cloud provisioning.
 
 ## 7. Cleanup
